@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loyalty Rewards — Testing Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --brand: #6c3de8;
+      --brand-dark: #4f28c5;
+      --gold: #f59e0b;
+      --silver: #9ca3af;
+      --bronze: #d97706;
+      --platinum: #06b6d4;
+    }
+    body { background: #f3f0ff; font-family: 'Segoe UI', sans-serif; }
+    .navbar { background: var(--brand) !important; }
+    .navbar-brand span { color: var(--gold); }
+    .hero { background: linear-gradient(135deg, var(--brand) 0%, #a855f7 100%);
+            color: #fff; border-radius: 1rem; padding: 2rem; margin-bottom: 2rem; }
+    .card { border: none; border-radius: .9rem; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .card-header { border-radius: .9rem .9rem 0 0 !important; font-weight: 600; }
+    .badge-Bronze   { background: var(--bronze); }
+    .badge-Silver   { background: var(--silver); }
+    .badge-Gold     { background: var(--gold); }
+    .badge-Platinum { background: var(--platinum); }
+    .tier-icon { font-size: 1.4rem; }
+    .customer-card:hover { transform: translateY(-2px); transition: .2s; cursor: pointer; }
+    .stat-box { background: #fff; border-radius: .7rem; padding: 1rem 1.3rem;
+                border-left: 4px solid var(--brand); }
+    .mcp-badge { background: #1e1b4b; color: #a5b4fc; font-size: .72rem;
+                 padding: .25rem .6rem; border-radius: .3rem; font-family: monospace; }
+    .endpoint-tag { font-size:.7rem; font-family:monospace; background:#e0e7ff;
+                    color:#3730a3; padding:2px 6px; border-radius:4px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand fw-bold fs-5" href="/">
+      <i class="bi bi-stars me-2"></i>Loyalty Rewards <span>MCP</span>
+    </a>
+    <div class="d-flex align-items-center gap-2">
+      <span class="mcp-badge"><i class="bi bi-broadcast me-1"></i>MCP Server: {{ mcp_url }}</span>
+      {% if health.status == 'ok' %}
+        <span class="badge bg-success"><i class="bi bi-circle-fill me-1" style="font-size:.5rem"></i>Online</span>
+      {% else %}
+        <span class="badge bg-danger">Offline</span>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+
+  <!-- Hero -->
+  <div class="hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-gift me-2"></i>Loyalty Rewards Testing Dashboard</h2>
+      <p class="mb-0 opacity-75">MCP-powered · 1 pt per $1 · 1,000 pts = $10 store cash</p>
+    </div>
+    <div class="d-flex gap-3 text-center">
+      <div class="stat-box text-dark">
+        <div class="fs-3 fw-bold text-purple">{{ customers|length }}</div>
+        <div class="small text-muted">Customers</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Register Customer -->
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header bg-purple text-white" style="background:var(--brand)!important;">
+          <i class="bi bi-person-plus me-2"></i>Register Customer
+          <span class="endpoint-tag float-end">POST /api/customers</span>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="/customers/create">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Full Name</label>
+              <input type="text" name="name" class="form-control" placeholder="Jane Doe" required/>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Email Address</label>
+              <input type="email" name="email" class="form-control" placeholder="jane@example.com" required/>
+            </div>
+            <button class="btn btn-primary w-100" style="background:var(--brand);border-color:var(--brand)">
+              <i class="bi bi-person-check me-2"></i>Create Account
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Earn Points -->
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header text-white" style="background:#16a34a">
+          <i class="bi bi-cash-coin me-2"></i>Post Purchase (Earn Points)
+          <span class="endpoint-tag float-end" style="background:#bbf7d0;color:#14532d">POST /earn</span>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="/rewards/earn">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Customer</label>
+              <select name="customer_id" class="form-select" required>
+                <option value="">— select customer —</option>
+                {% for c in customers %}
+                  <option value="{{ c.id }}">{{ c.name }} ({{ c.email }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Amount Spent ($)</label>
+              <input type="number" name="amount_spent" class="form-control" min="1" step="0.01" placeholder="49.99" required/>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Description (optional)</label>
+              <input type="text" name="description" class="form-control" placeholder="Order #1234"/>
+            </div>
+            <button class="btn w-100 text-white" style="background:#16a34a">
+              <i class="bi bi-plus-circle me-2"></i>Award Points
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Redeem Points -->
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header text-white" style="background:#d97706">
+          <i class="bi bi-gift-fill me-2"></i>Redeem Rewards
+          <span class="endpoint-tag float-end" style="background:#fef3c7;color:#92400e">POST /redeem</span>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-warning py-2 small mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>Minimum 1,000 points</strong> required to redeem.
+            Each block of 1,000 pts = <strong>$10 store cash</strong>.
+          </div>
+          <form method="POST" action="/rewards/redeem">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Customer</label>
+              <select name="customer_id" class="form-select" required>
+                <option value="">— select customer —</option>
+                {% for c in customers %}
+                  <option value="{{ c.id }}">{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Blocks to Redeem</label>
+              <input type="number" name="blocks" class="form-control" min="1" value="1" required/>
+              <div class="form-text">1 block = 1,000 pts = $10</div>
+            </div>
+            <button class="btn w-100 text-white" style="background:#d97706">
+              <i class="bi bi-cash-stack me-2"></i>Redeem Store Cash
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row -->
+
+  <!-- Customer List -->
+  <div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:#1e1b4b;color:#e0e7ff">
+      <span><i class="bi bi-people me-2"></i>Customer Roster</span>
+      <span class="endpoint-tag">GET /api/customers</span>
+    </div>
+    <div class="card-body p-0">
+      {% if customers %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th><th>Email</th><th>Tier</th>
+              <th>Customer ID</th><th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in customers %}
+            <tr class="customer-card" onclick="window.location='/customers/{{ c.id }}'">
+              <td class="fw-semibold">{{ c.name }}</td>
+              <td class="text-muted small">{{ c.email }}</td>
+              <td>
+                <span class="badge badge-{{ c.tier }} text-white">
+                  {% if c.tier == 'Platinum' %}🏆{% elif c.tier == 'Gold' %}🥇{% elif c.tier == 'Silver' %}🥈{% else %}🥉{% endif %}
+                  {{ c.tier }}
+                </span>
+              </td>
+              <td><code class="small text-muted">{{ c.id[:16] }}…</code></td>
+              <td class="text-end">
+                <a href="/customers/{{ c.id }}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye me-1"></i>View
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-person-x display-4"></i>
+        <p class="mt-2">No customers yet. Create one above to get started.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- MCP Endpoints Reference -->
+  <div class="card mt-4">
+    <div class="card-header" style="background:#0f172a;color:#94a3b8">
+      <i class="bi bi-terminal me-2"></i>MCP Tools & REST API Reference
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        {% set endpoints = [
+          ("GET", "/api/rewards/{id}/balance", "GetRewardsBalance", "bi-wallet2", "#6c3de8"),
+          ("POST", "/api/rewards/{id}/earn", "PostRewards (1pt/$1)", "bi-cash-coin", "#16a34a"),
+          ("GET", "/api/rewards/{id}/redeemable", "GetRedeemableCash", "bi-gift", "#d97706"),
+          ("POST", "/api/rewards/{id}/redeem", "RedeemRewards", "bi-stars", "#e11d48"),
+          ("POST", "/api/customers", "CreateCustomer", "bi-person-plus", "#0891b2"),
+          ("GET", "/api/rewards/{id}/history", "TransactionHistory", "bi-clock-history", "#7c3aed"),
+        ] %}
+        {% for method, path, label, icon, color in endpoints %}
+        <div class="col-md-4">
+          <div class="d-flex align-items-start gap-2 p-3" style="background:#f8fafc;border-radius:.6rem;border-left:3px solid {{ color }}">
+            <i class="bi {{ icon }} mt-1" style="color:{{ color }};font-size:1.1rem"></i>
+            <div>
+              <div class="fw-semibold small">{{ label }}</div>
+              <code class="text-muted" style="font-size:.7rem">
+                <span class="badge" style="background:{{ color }};font-size:.6rem">{{ method }}</span>
+                {{ path }}
+              </code>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mt-3 p-3" style="background:#1e1b4b;border-radius:.6rem;color:#a5b4fc">
+        <div class="small fw-semibold mb-1"><i class="bi bi-broadcast me-2"></i>MCP SSE Endpoint (for AI agents / Claude)</div>
+        <code class="text-success">{{ mcp_url }}/mcp/sse</code>
+        <span class="text-muted small ms-3">Tools: get_rewards_balance · post_rewards · get_redeemable_cash · redeem_rewards · list_customers · get_transaction_history</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --max-time 3 http://localhost:8000/mcp/sse)",
+      "Bash(curl -s http://localhost:8002/api/tools)"
+    ]
+  }
+}
